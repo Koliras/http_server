@@ -5,6 +5,8 @@ import "core:net"
 import "core:os"
 import "core:strings"
 
+import "./http"
+
 main :: proc() {
 	endpoint, ok := net.parse_endpoint("127.0.0.1:8888")
 	if !ok {
@@ -25,19 +27,30 @@ main :: proc() {
 			continue
 		}
 		defer net.close(client)
-		fmt.println("Connected by", source.address)
+
 		buf := [1024]u8{}
 		data_read, recv_err := net.recv_tcp(client, buf[:])
 		if recv_err != nil {
 			fmt.println("Error when reading data of request:", recv_err)
 			continue
 		}
-		data_sent, send_err := net.send_tcp(client, buf[:])
+		res := http.Response {
+			headers = make(map[string]string),
+			body    = make([dynamic]byte),
+		}
+		defer delete(res.body)
+		defer delete(res.headers)
+		handle_request(buf[:], &res)
+		response_buffer := make([dynamic]byte, 0, len(res.body))
+		http.response_to_bytes(&res, &response_buffer)
+		data_sent, send_err := net.send_tcp(client, response_buffer[:])
 		if send_err != nil {
 			fmt.println("Error when sending data to client:", send_err)
 			continue
 		}
-		str := strings.clone_from_bytes(buf[:]) or_continue
-		fmt.println("Data:", str)
+		fmt.println("Sent response", data_sent, response_buffer)
 	}
+}
+
+handle_request :: proc(data: []byte, res: ^http.Response) {
 }
