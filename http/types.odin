@@ -182,3 +182,19 @@ Response :: struct {
 	headers: map[string]string,
 	body:    [dynamic]byte,
 }
+
+Method :: enum {
+	Get,
+	Post,
+	Delete,
+	Put,
+	Patch,
+}
+
+Request :: struct {
+	method:  Method,
+	version: string,
+	path:    string,
+	headers: map[string]string,
+	body:    string,
+}

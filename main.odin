@@ -28,12 +28,15 @@ main :: proc() {
 		}
 		defer net.close(client)
 
-		buf := [1024]u8{}
+		buf := make([]u8, 2048)
 		data_read, recv_err := net.recv_tcp(client, buf[:])
 		if recv_err != nil {
 			fmt.println("Error when reading data of request:", recv_err)
 			continue
 		}
+		req := http.Request{}
+		request_error := http.request_from_bytes(buf[:], &req)
+		delete(buf)
 		res := http.Response {
 			status  = .OK,
 			headers = make(map[string]string),
@@ -41,7 +44,7 @@ main :: proc() {
 		}
 		defer delete(res.body)
 		defer delete(res.headers)
-		handle_request(buf[:], &res)
+		handle_request(&req, &res)
 		response_buffer := make([dynamic]byte, 0, len(res.body))
 		http.response_to_bytes(&res, &response_buffer)
 		data_sent, send_err := net.send_tcp(client, response_buffer[:])
@@ -49,10 +52,9 @@ main :: proc() {
 			fmt.println("Error when sending data to client:", send_err)
 			continue
 		}
-		fmt.println("Sent response:\n", response_buffer)
 	}
 }
 
-handle_request :: proc(data: []byte, res: ^http.Response) {
+handle_request :: proc(req: ^http.Request, res: ^http.Response) {
 	append(&res.body, "My response")
 }
