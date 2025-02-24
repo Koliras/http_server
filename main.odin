@@ -35,6 +35,7 @@ main :: proc() {
 			continue
 		}
 		res := http.Response {
+			status  = .OK,
 			headers = make(map[string]string),
 			body    = make([dynamic]byte),
 		}
@@ -48,9 +49,10 @@ main :: proc() {
 			fmt.println("Error when sending data to client:", send_err)
 			continue
 		}
-		fmt.println("Sent response", data_sent, response_buffer)
+		fmt.println("Sent response:\n", response_buffer)
 	}
 }
 
 handle_request :: proc(data: []byte, res: ^http.Response) {
+	append(&res.body, "My response")
 }
