@@ -181,6 +181,7 @@ Response :: struct {
 	status:  Status_Code,
 	headers: map[string]string,
 	body:    [dynamic]byte,
+	version: string,
 }
 
 Method :: enum {

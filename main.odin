@@ -29,18 +29,18 @@ main :: proc() {
 		defer net.close(client)
 
 		buf := make([]u8, 2048)
+		defer delete(buf)
 		data_read, recv_err := net.recv_tcp(client, buf[:])
 		if recv_err != nil {
 			fmt.println("Error when reading data of request:", recv_err)
 			continue
 		}
-		req := http.Request{}
-		request_error := http.request_from_bytes(buf[:], &req)
-		delete(buf)
+		req, request_error := http.request_from_bytes(buf[:data_read])
 		res := http.Response {
 			status  = .OK,
 			headers = make(map[string]string),
 			body    = make([dynamic]byte),
+			version = req.version,
 		}
 		defer delete(res.body)
 		defer delete(res.headers)

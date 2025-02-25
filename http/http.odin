@@ -6,7 +6,7 @@ import "core:strconv"
 import "core:strings"
 
 response_to_bytes :: proc(res: ^Response, buf: ^[dynamic]byte) {
-	append(buf, fmt.aprint("HTTP/1.1", res.status, Status_Text[res.status], "\r\n"))
+	append(buf, fmt.aprintf("%s %d %s\r\n", res.version, res.status, Status_Text[res.status]))
 	for header, value in res.headers {
 		append(buf, header)
 		append(buf, ": ")
@@ -23,13 +23,19 @@ Request_Parse_Error :: enum {
 	None = 0,
 	Incorrect_Request_Line_Format,
 	Unknown_Method,
+	Too_Short_Request_Data,
 }
 
-request_from_bytes :: proc(req_bytes: []byte, req: ^Request) -> Request_Parse_Error {
-	lines := bytes.split(req_bytes, []byte{13, 10}) // split by "\r\n"
-	request_line := bytes.split(lines[0], []byte{32}) // split by " "
+request_from_bytes :: proc(req_bytes: []byte) -> (Request, Request_Parse_Error) {
+	req := Request{}
+	if len(req_bytes) < 12 {
+		return req, .Too_Short_Request_Data
+	}
+	parts := bytes.split(req_bytes, []byte{13, 10, 13, 10}) // split by "\r\n"
+	headers_part := bytes.split(parts[0], []byte{13, 10}) // split by "\r\n"
+	request_line := bytes.split(headers_part[0], []byte{32}) // split by " "
 	if len(request_line) != 3 {
-		return .Incorrect_Request_Line_Format
+		return req, .Incorrect_Request_Line_Format
 	}
 	method := string(request_line[0])
 	switch method {
@@ -44,28 +50,29 @@ request_from_bytes :: proc(req_bytes: []byte, req: ^Request) -> Request_Parse_Er
 	case "PATCH":
 		req.method = .Patch
 	case:
-		return .Unknown_Method
+		return req, .Unknown_Method
 	}
 
+	req.headers = make(map[string]string)
 	line_index: int = 1
-	for ; line_index < len(lines); line_index += 1 {
-		line := lines[line_index]
+	for ; line_index < len(headers_part); line_index += 1 {
+		line := headers_part[line_index]
 		if string(line) == "\r\n" {
 			break
 		}
-		header_string := bytes.split_n(lines[line_index], []byte{58, 32}, 2) // split by ": "
+		header_string := bytes.split_n(headers_part[line_index], []byte{58, 32}, 2) // split by ": "
 		if len(header_string) != 2 {
 			continue
 		}
-		req.headers[string(header_string[0])] = strings.clone_from_bytes(header_string[1])
+		req.headers[string(header_string[0])] = string(header_string[1])
 	}
 
-	// body_buffer_len := strconv.atoi(req.headers["Content-Length"])
-	// body := make([dynamic]byte, 0, body_buffer_len)
-	// defer delete(body)
+	if len(parts) == 2 {
+		req.body = strings.clone_from_bytes(parts[1])
+	}
 
-	req.path = strings.clone_from_bytes(request_line[1])
-	req.version = strings.clone_from_bytes(request_line[2])
+	req.path = string(request_line[1])
+	req.version = string(request_line[2])
 
-	return nil
+	return req, nil
 }
