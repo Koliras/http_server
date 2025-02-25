@@ -190,6 +190,10 @@ Method :: enum {
 	Delete,
 	Put,
 	Patch,
+	Options,
+	Head,
+	Connect,
+	Trace,
 }
 
 Request :: struct {

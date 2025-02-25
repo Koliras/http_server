@@ -49,6 +49,14 @@ request_from_bytes :: proc(req_bytes: []byte) -> (Request, Request_Parse_Error) 
 		req.method = .Put
 	case "PATCH":
 		req.method = .Patch
+	case "OPTIONS":
+		req.method = .Options
+	case "TRACE":
+		req.method = .Trace
+	case "HEAD":
+		req.method = .Head
+	case "CONNECT":
+		req.method = .Connect
 	case:
 		return req, .Unknown_Method
 	}
