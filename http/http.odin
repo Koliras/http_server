@@ -34,7 +34,7 @@ request_from_bytes :: proc(req_bytes: []byte) -> (Request, Request_Parse_Error) 
 	parts := bytes.split(req_bytes, []byte{13, 10, 13, 10}) // split by "\r\n"
 	headers_part := bytes.split(parts[0], []byte{13, 10}) // split by "\r\n"
 	request_line := bytes.split(headers_part[0], []byte{32}) // split by " "
-	if len(request_line) != 3 {
+	if len(request_line) < 2 {
 		return req, .Incorrect_Request_Line_Format
 	}
 	method := string(request_line[0])
@@ -72,7 +72,11 @@ request_from_bytes :: proc(req_bytes: []byte) -> (Request, Request_Parse_Error) 
 	}
 
 	req.path = string(request_line[1])
-	req.version = string(request_line[2])
+	if len(request_line) == 3 {
+		req.version = string(request_line[2])
+	} else {
+		req.version = "HTTP/1.1"
+	}
 
 	return req, nil
 }
