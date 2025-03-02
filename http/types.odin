@@ -177,13 +177,6 @@ Status_Text: map[Status_Code]string = {
 	Status_Code.Network_Read_Timeout_Error           = "Network Read Timeout Error",
 }
 
-Response :: struct {
-	status:  Status_Code,
-	headers: map[string]string,
-	body:    [dynamic]byte,
-	version: string,
-}
-
 Method :: enum {
 	Get,
 	Post,
@@ -194,12 +187,4 @@ Method :: enum {
 	Head,
 	Connect,
 	Trace,
-}
-
-Request :: struct {
-	method:  Method,
-	version: string,
-	url:     URL,
-	headers: map[string]string,
-	body:    string,
 }

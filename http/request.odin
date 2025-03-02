@@ -1,20 +1,14 @@
 package http
 
 import "core:bytes"
-import "core:fmt"
-import "core:strconv"
 import "core:strings"
 
-response_to_bytes :: proc(res: ^Response, buf: ^[dynamic]byte) {
-	append(buf, fmt.aprintf("%s %d %s\r\n", res.version, res.status, Status_Text[res.status]))
-	for header, value in res.headers {
-		append(buf, header)
-		append(buf, ": ")
-		append(buf, value)
-		append(buf, "\r\n")
-	}
-	append(buf, "\r\n")
-	append(buf, string(res.body[:]))
+Request :: struct {
+	method:  Method,
+	version: string,
+	url:     URL,
+	headers: map[string]string,
+	body:    string,
 }
 
 Request_Parse_Error :: enum {
@@ -29,7 +23,7 @@ request_from_bytes :: proc(req_bytes: []byte) -> (Request, Request_Parse_Error) 
 	if len(req_bytes) < 12 {
 		return req, .Too_Short_Request_Data
 	}
-	parts := bytes.split(req_bytes, []byte{13, 10, 13, 10}) // split by "\r\n"
+	parts := bytes.split(req_bytes, []byte{13, 10, 13, 10}) // split by "\r\n\r\n"
 	headers_part := bytes.split(parts[0], []byte{13, 10}) // split by "\r\n"
 	request_line := bytes.split(headers_part[0], []byte{32}) // split by " "
 	if len(request_line) < 2 {
