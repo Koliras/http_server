@@ -1,6 +1,7 @@
 package main
 
 import "core:fmt"
+import "core:log"
 import "core:net"
 import "core:os"
 import "core:strings"
@@ -36,14 +37,9 @@ main :: proc() {
 			continue
 		}
 		req, request_error := http.request_from_bytes(buf[:data_read])
-		res := http.Response {
-			status  = .OK,
-			headers = make(map[string]string),
-			body    = make([dynamic]byte),
-			version = req.version,
-		}
-		defer delete(res.body)
-		defer delete(res.headers)
+		res: http.Response
+		http.response_init(&res)
+		defer http.response_delete(&res)
 		handle_request(&req, &res)
 		response_buffer := make([dynamic]byte, 0, len(res.body))
 		http.response_to_bytes(&res, &response_buffer)
@@ -56,5 +52,4 @@ main :: proc() {
 }
 
 handle_request :: proc(req: ^http.Request, res: ^http.Response) {
-	append(&res.body, "My response")
 }
