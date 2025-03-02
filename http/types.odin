@@ -199,7 +199,7 @@ Method :: enum {
 Request :: struct {
 	method:  Method,
 	version: string,
-	path:    string,
+	url:     URL,
 	headers: map[string]string,
 	body:    string,
 }

@@ -14,9 +14,7 @@ response_to_bytes :: proc(res: ^Response, buf: ^[dynamic]byte) {
 		append(buf, "\r\n")
 	}
 	append(buf, "\r\n")
-	for b in res.body {
-		append(buf, b)
-	}
+	append(buf, string(res.body[:]))
 }
 
 Request_Parse_Error :: enum {
@@ -79,7 +77,7 @@ request_from_bytes :: proc(req_bytes: []byte) -> (Request, Request_Parse_Error) 
 		req.body = strings.clone_from_bytes(parts[1])
 	}
 
-	req.path = string(request_line[1])
+	req.url = url_parse(string(request_line[1]))
 	if len(request_line) == 3 {
 		req.version = string(request_line[2])
 	} else {
